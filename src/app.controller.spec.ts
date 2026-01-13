@@ -16,7 +16,9 @@ describe('AppController', () => {
 
   describe('root', () => {
     it('should return "hello world from notification-service"', () => {
-      expect(appController.getHello()).toBe('hello world from notification-service');
+      expect(appController.getHello()).toBe(
+        'hello world from notification-service',
+      );
     });
   });
 });
