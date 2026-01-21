@@ -77,4 +77,9 @@ jobs:
             --cache-repo=ghcr.io/${{ github.repository_owner }}/trubanb-notification-service-cache \
             --cache-ttl=168h \
             --compressed-caching=false \
-            --push-retry=3
+            --push-retry=3 \
+            --label=org.opencontainers.image.source=https://github.com/${{ github.repository }} \
+            --label=org.opencontainers.image.description="Trubanb Notification Service" \
+            --label=org.opencontainers.image.licenses=MIT \
+            --label=org.opencontainers.image.revision=${{ github.sha }} \
+            --label=org.opencontainers.image.version=${{ needs.release.outputs.new_release_version }}
