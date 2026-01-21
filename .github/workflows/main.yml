@@ -58,18 +58,31 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Login to GHCR
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Prepare Kaniko Config
+        run: |
+          mkdir -p /tmp/kaniko
+          cat > /tmp/kaniko/config.json <<EOF
+          {
+            "auths": {
+              "ghcr.io": {
+                "auth": "$(echo -n '${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}' | base64)"
+              }
+            }
+          }
+          EOF
 
-      - name: Build & Push Image
-        uses: docker/build-push-action@v6
+      - name: Build & Push with Kaniko
+        uses: docker://gcr.io/kaniko-project/executor:v1.23.2-debug
         with:
-          context: .
-          push: true
-          tags: |
-            ghcr.io/${{ github.repository_owner }}/trubanb-notification-service:${{ needs.release.outputs.new_release_version }}
-            ghcr.io/${{ github.repository_owner }}/trubanb-notification-service:latest
+          args: >-
+            --context=${{ github.workspace }}
+            --dockerfile=${{ github.workspace }}/Dockerfile
+            --destination=ghcr.io/${{ github.repository_owner }}/trubanb-notification-service:${{ needs.release.outputs.new_release_version }}
+            --destination=ghcr.io/${{ github.repository_owner }}/trubanb-notification-service:latest
+            --cache=true
+            --cache-repo=ghcr.io/${{ github.repository_owner }}/trubanb-notification-service-cache
+            --cache-ttl=168h
+            --compressed-caching=false
+            --push-retry=3
+        env:
+          DOCKER_CONFIG: /tmp/kaniko
