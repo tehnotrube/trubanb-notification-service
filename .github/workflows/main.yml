@@ -61,28 +61,20 @@ jobs:
       - name: Prepare Kaniko Config
         run: |
           mkdir -p /tmp/kaniko
-          cat > /tmp/kaniko/config.json <<EOF
-          {
-            "auths": {
-              "ghcr.io": {
-                "auth": "$(echo -n '${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}' | base64)"
-              }
-            }
-          }
-          EOF
+          echo '{"auths":{"ghcr.io":{"auth":"'$(echo -n "${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}" | base64)'"}}}' > /tmp/kaniko/config.json
 
       - name: Build & Push with Kaniko
-        uses: docker://gcr.io/kaniko-project/executor:v1.23.2-debug
-        with:
-          args: >-
-            --context=${{ github.workspace }}
-            --dockerfile=${{ github.workspace }}/Dockerfile
-            --destination=ghcr.io/${{ github.repository_owner }}/trubanb-notification-service:${{ needs.release.outputs.new_release_version }}
-            --destination=ghcr.io/${{ github.repository_owner }}/trubanb-notification-service:latest
-            --cache=true
-            --cache-repo=ghcr.io/${{ github.repository_owner }}/trubanb-notification-service-cache
-            --cache-ttl=168h
-            --compressed-caching=false
+        run: |
+          docker run --rm \
+            -v "$PWD":/workspace \
+            -v /tmp/kaniko:/kaniko/.docker \
+            gcr.io/kaniko-project/executor:v1.23.2-debug \
+            --context=/workspace \
+            --dockerfile=/workspace/Dockerfile \
+            --destination=ghcr.io/${{ github.repository_owner }}/trubanb-notification-service:${{ needs.release.outputs.new_release_version }} \
+            --destination=ghcr.io/${{ github.repository_owner }}/trubanb-notification-service:latest \
+            --cache=true \
+            --cache-repo=ghcr.io/${{ github.repository_owner }}/trubanb-notification-service-cache \
+            --cache-ttl=168h \
+            --compressed-caching=false \
             --push-retry=3
-        env:
-          DOCKER_CONFIG: /tmp/kaniko
