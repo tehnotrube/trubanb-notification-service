@@ -1,24 +1,40 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { HttpService } from '@nestjs/axios';
-import { firstValueFrom } from 'rxjs';
+import { Injectable, Inject, OnModuleInit, Logger } from '@nestjs/common';
+import type { ClientGrpc } from '@nestjs/microservices';
+import { Observable, firstValueFrom } from 'rxjs';
 import { NotificationType } from '../notifications';
 
 export type NotificationPreferences = Record<NotificationType, boolean>;
 
+interface GetPreferencesRequest {
+  userId: string;
+}
+
+interface GetPreferencesResponse {
+  reservationRequestCreated: boolean;
+  reservationRequestResponded: boolean;
+  reservationCancelled: boolean;
+  hostRated: boolean;
+  accommodationRated: boolean;
+}
+
+interface UserGrpcService {
+  getNotificationPreferences(
+    data: GetPreferencesRequest,
+  ): Observable<GetPreferencesResponse>;
+}
+
 @Injectable()
-export class UserClientService {
+export class UserClientService implements OnModuleInit {
   private readonly logger = new Logger(UserClientService.name);
-  private readonly userServiceUrl: string;
+  private userService: UserGrpcService;
 
   constructor(
-    private readonly configService: ConfigService,
-    private readonly httpService: HttpService,
-  ) {
-    this.userServiceUrl = this.configService.get<string>(
-      'USER_SERVICE_URL',
-      'http://localhost:3001',
-    );
+    @Inject('USER_PACKAGE')
+    private readonly client: ClientGrpc,
+  ) {}
+
+  onModuleInit() {
+    this.userService = this.client.getService<UserGrpcService>('UserService');
   }
 
   async getNotificationPreferences(
@@ -26,12 +42,19 @@ export class UserClientService {
   ): Promise<NotificationPreferences | null> {
     try {
       const response = await firstValueFrom(
-        this.httpService.get<NotificationPreferences>(
-          `${this.userServiceUrl}/api/users/internal/${userId}/preferences`,
-          { timeout: 5000 },
-        ),
+        this.userService.getNotificationPreferences({ userId }),
       );
-      return response.data;
+
+      // Map gRPC response to NotificationPreferences
+      return {
+        [NotificationType.RESERVATION_REQUEST_CREATED]:
+          response.reservationRequestCreated,
+        [NotificationType.RESERVATION_REQUEST_RESPONDED]:
+          response.reservationRequestResponded,
+        [NotificationType.RESERVATION_CANCELLED]: response.reservationCancelled,
+        [NotificationType.HOST_RATED]: response.hostRated,
+        [NotificationType.ACCOMMODATION_RATED]: response.accommodationRated,
+      } as NotificationPreferences;
     } catch (error) {
       this.logger.error(
         `Failed to fetch notification preferences for user ${userId}`,
