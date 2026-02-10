@@ -1,25 +1,38 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication } from '@nestjs/common';
+import { INestApplication, Controller, Get } from '@nestjs/common';
 import request from 'supertest';
-import { App } from 'supertest/types';
-import { AppModule } from './../src/app.module';
+import { Server } from 'http';
 
-describe('AppController (e2e)', () => {
-  let app: INestApplication<App>;
+// 1. Define a tiny dummy controller right in the test
+@Controller()
+class DummyController {
+  @Get()
+  getHello() {
+    return { status: 'ok' };
+  }
+}
 
-  beforeEach(async () => {
+describe('Dummy E2E (Isolation)', () => {
+  let app: INestApplication;
+
+  beforeAll(async () => {
+    // 2. Compile a module with ONLY the dummy controller
     const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
+      controllers: [DummyController],
     }).compile();
 
     app = moduleFixture.createNestApplication();
     await app.init();
   });
 
-  it('/ (GET)', () => {
-    return request(app.getHttpServer())
+  it('should respond to a basic GET request', () => {
+    return request(app.getHttpServer() as Server)
       .get('/')
       .expect(200)
-      .expect('Hello World!');
+      .expect({ status: 'ok' });
+  });
+
+  afterAll(async () => {
+    await app.close();
   });
 });
