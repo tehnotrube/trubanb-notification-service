@@ -1,7 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Notification, NotificationDocument } from './schemas/notification.schema';
+import {
+  Notification,
+  NotificationDocument,
+} from './schemas/notification.schema';
 import { CreateNotificationDto } from './dto/create-notification.dto';
 import { PaginatedNotificationsDto } from './dto/paginated-notifications.dto';
 
@@ -40,7 +43,7 @@ export class NotificationsService {
     limit = 20,
     readFilter?: boolean,
   ): Promise<PaginatedNotificationsDto> {
-    const query: any = { userId };
+    const query: { userId: string; read?: boolean } = { userId };
 
     if (readFilter !== undefined) {
       query.read = readFilter;
@@ -71,11 +74,7 @@ export class NotificationsService {
 
   async markAsRead(id: string, userId: string): Promise<Notification | null> {
     return this.notificationModel
-      .findOneAndUpdate(
-        { _id: id, userId },
-        { read: true },
-        { new: true },
-      )
+      .findOneAndUpdate({ _id: id, userId }, { read: true }, { new: true })
       .exec();
   }
 

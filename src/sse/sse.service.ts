@@ -1,10 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Subject, Observable, filter } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { Notification } from '../notifications/schemas/notification.schema';
 
 interface NotificationEvent {
   userId: string;
-  data: any;
+  data: Notification;
 }
 
 @Injectable()
@@ -33,7 +34,7 @@ export class SseService {
    * Send a notification to a specific user
    * Called by event handlers when new notifications are created
    */
-  sendToUser(userId: string, notification: any): void {
+  sendToUser(userId: string, notification: Notification): void {
     this.logger.debug(`Sending notification to user ${userId}`);
     this.notificationSubject.next({
       userId,

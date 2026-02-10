@@ -11,9 +11,7 @@ import { UserClientModule } from '../user-client/user-client.module';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
-        exchanges: [
-          { name: 'trubanb.notifications', type: 'topic' },
-        ],
+        exchanges: [{ name: 'trubanb.notifications', type: 'topic' }],
         uri: configService.get<string>(
           'RABBITMQ_URL',
           'amqp://guest:guest@localhost:5672',

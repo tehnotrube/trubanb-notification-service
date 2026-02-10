@@ -9,7 +9,7 @@ export class Notification {
   @Prop({ required: true, index: true })
   userId: string;
 
-  @Prop({type: String, required: true, enum: NotificationType })
+  @Prop({ type: String, required: true, enum: NotificationType })
   type: NotificationType;
 
   @Prop({ required: true })
@@ -37,4 +37,7 @@ export const NotificationSchema = SchemaFactory.createForClass(Notification);
 NotificationSchema.index({ userId: 1, createdAt: -1 });
 NotificationSchema.index({ userId: 1, read: 1 });
 // Unique index for idempotency
-NotificationSchema.index({ eventId: 1, userId: 1 }, { unique: true, sparse: true });
+NotificationSchema.index(
+  { eventId: 1, userId: 1 },
+  { unique: true, sparse: true },
+);

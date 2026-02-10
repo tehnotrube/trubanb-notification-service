@@ -3,7 +3,10 @@ import { Controller, Logger } from '@nestjs/common';
 import { NotificationsService, NotificationType } from '../../notifications';
 import { UserClientService } from '../../user-client';
 import { SseService } from '../../sse';
-import { getNotificationContent } from '../notification-templates';
+import {
+  getNotificationContent,
+  NotificationData,
+} from '../notification-templates';
 import type {
   ReservationRequestCreatedEvent,
   ReservationRequestRespondedEvent,
@@ -28,7 +31,9 @@ export class NotificationEventsHandler {
     queue: 'notification.reservation.request.created',
   })
   async handleReservationRequestCreated(event: ReservationRequestCreatedEvent) {
-    this.logger.log(`Received reservation request created event: ${event.eventId}`);
+    this.logger.log(
+      `Received reservation request created event: ${event.eventId}`,
+    );
 
     const hostId = event.payload.hostId;
     const notificationType = NotificationType.RESERVATION_REQUEST_CREATED;
@@ -46,8 +51,12 @@ export class NotificationEventsHandler {
     routingKey: 'reservation.request.responded',
     queue: 'notification.reservation.request.responded',
   })
-  async handleReservationRequestResponded(event: ReservationRequestRespondedEvent) {
-    this.logger.log(`Received reservation request responded event: ${event.eventId}`);
+  async handleReservationRequestResponded(
+    event: ReservationRequestRespondedEvent,
+  ) {
+    this.logger.log(
+      `Received reservation request responded event: ${event.eventId}`,
+    );
 
     const guestId = event.payload.guestId;
     const notificationType = NotificationType.RESERVATION_REQUEST_RESPONDED;
@@ -120,7 +129,7 @@ export class NotificationEventsHandler {
   private async createAndSendNotification(
     userId: string,
     type: NotificationType,
-    data: any,
+    data: NotificationData,
     eventId: string,
   ): Promise<void> {
     try {
@@ -150,7 +159,9 @@ export class NotificationEventsHandler {
         eventId,
       });
 
-      this.logger.log(`Created notification ${notification} for user ${userId}`);
+      this.logger.log(
+        `Created notification for user ${userId}: ${notification.title}`,
+      );
 
       // Send real-time notification via SSE
       this.sseService.sendToUser(userId, notification);

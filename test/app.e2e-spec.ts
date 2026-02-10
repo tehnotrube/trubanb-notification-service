@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, Controller, Get } from '@nestjs/common';
 import request from 'supertest';
+import { Server } from 'http';
 
 // 1. Define a tiny dummy controller right in the test
 @Controller()
@@ -25,7 +26,7 @@ describe('Dummy E2E (Isolation)', () => {
   });
 
   it('should respond to a basic GET request', () => {
-    return request(app.getHttpServer())
+    return request(app.getHttpServer() as Server)
       .get('/')
       .expect(200)
       .expect({ status: 'ok' });

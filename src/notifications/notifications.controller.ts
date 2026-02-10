@@ -42,10 +42,14 @@ export class NotificationsController {
     @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number,
     @Query('read') readParam?: string,
   ) {
-    const readFilter = readParam !== undefined
-      ? readParam === 'true'
-      : undefined;
-    return this.notificationsService.findAllForUser(user.id, page, limit, readFilter);
+    const readFilter =
+      readParam !== undefined ? readParam === 'true' : undefined;
+    return this.notificationsService.findAllForUser(
+      user.id,
+      page,
+      limit,
+      readFilter,
+    );
   }
 
   @Get('unread-count')
@@ -74,7 +78,10 @@ export class NotificationsController {
     @CurrentUser() user: AuthenticatedUser,
     @Param('id') id: string,
   ) {
-    const notification = await this.notificationsService.markAsRead(id, user.id);
+    const notification = await this.notificationsService.markAsRead(
+      id,
+      user.id,
+    );
     if (!notification) {
       throw new NotFoundException('Notification not found');
     }
