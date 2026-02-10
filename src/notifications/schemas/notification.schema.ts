@@ -9,7 +9,7 @@ export class Notification {
   @Prop({ required: true, index: true })
   userId: string;
 
-  @Prop({ required: true, enum: NotificationType })
+  @Prop({type: String, required: true, enum: NotificationType })
   type: NotificationType;
 
   @Prop({ required: true })
