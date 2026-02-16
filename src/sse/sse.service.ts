@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Subject, Observable, filter } from 'rxjs';
+import { Subject, Observable, filter, merge, interval } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Notification } from '../notifications/schemas/notification.schema';
 
@@ -7,6 +7,8 @@ interface NotificationEvent {
   userId: string;
   data: Notification;
 }
+
+const HEARTBEAT_INTERVAL_MS = 30_000;
 
 @Injectable()
 export class SseService {
@@ -20,7 +22,7 @@ export class SseService {
   getStreamForUser(userId: string): Observable<MessageEvent> {
     this.logger.log(`User ${userId} connected to SSE stream`);
 
-    return this.notificationSubject.pipe(
+    const notifications$ = this.notificationSubject.pipe(
       filter((event) => event.userId === userId),
       map((event) => {
         return {
@@ -28,6 +30,18 @@ export class SseService {
         } as MessageEvent;
       }),
     );
+
+    const heartbeat$ = interval(HEARTBEAT_INTERVAL_MS).pipe(
+      map(
+        () =>
+          ({
+            type: 'heartbeat',
+            data: '',
+          }) as MessageEvent,
+      ),
+    );
+
+    return merge(notifications$, heartbeat$);
   }
 
   /**
